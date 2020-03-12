@@ -1,1 +1,1 @@
-# Project-E-Commerce
+# A Simple E Commerce SQL + Kivy
