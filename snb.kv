@@ -1,0 +1,813 @@
+<WindowManager>:
+    MainWindow:
+    RegisterWindow:
+    GuestWindow:
+    BuyerWindow:
+    SellerWindow:
+    Payment:
+    Statistics:
+
+<MainWindow>:
+    name: "main"
+    canvas.before:
+        Color:
+            rgba: root.rgba(204,102,0,1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        orientation: "vertical"
+        GridLayout:
+            cols: 2
+            Label:
+                text: "Email: "
+            TextInput:
+                id: email
+                multiline: False
+
+            Label:
+                text: "Nickname: "
+            TextInput:
+                id: nickname
+                multiline: False
+
+            Label:
+                text: "Password: "
+            TextInput:
+                id: password
+                multiline: False
+
+        Button:
+            text: "Sign In"
+            on_release:
+                if root.user_finder(email.text, nickname.text, password.text) == "buyer": app.root.current = "BuyerWindow"
+                if root.user_finder(email.text, nickname.text, password.text) == "seller": app.root.current = "SellerWindow"
+                if root.user_finder(email.text, nickname.text, password.text) == 0: root.btn()
+                email.text = ""
+                nickname.text = ""
+                password.text = ""
+                root.manager.transition.direction = "left"
+        Button:
+            text: "Sign Up"
+            on_release:
+                app.root.current = "registerWindow"
+                root.manager.transition.direction = "left"
+        Button:
+            text: "Continue as a Guest"
+            on_release:
+                app.root.current = "GuestWindow"
+                root.manager.transition.direction = "left"
+        Button:
+            text: "Statistical Data"
+            on_release:
+                app.root.current = "statistics"
+                root.manager.transition.direction = "left"
+
+<Statistics>:
+    name: "statistics"
+    canvas:
+        Color:
+            rgba: root.rgba(204,102,0,1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: "vertical"
+        spacing: 15
+        Label:
+            size_hint_y: 0.6
+            text: root.statistic_find(0)
+        GridLayout:
+            cols:2
+            Label:
+                text: root.statistic_find(1)
+            Label:
+                text: root.statistic_find(2)
+            Label:
+                text: root.statistic_find(3)
+            Label:
+                text: root.statistic_find(4)
+            Label:
+                text: root.statistic_find(5)
+            Label:
+                text: root.statistic_find(6)
+            Label:
+                text: root.statistic_find(7)
+            Label:
+                text: root.statistic_find(8)
+            Label:
+                text: root.statistic_find(9)
+            Label:
+                text: root.statistic_find(10)
+            Label:
+                text: root.statistic_find(11)
+            Label:
+                text: root.statistic_find(12)
+            Label:
+                text: root.statistic_find(13)
+            Label:
+                text: root.statistic_find(14)
+        Button:
+            size_hint: 0.5,0.5
+            pos_hint: {"center_x":0.5,"center_y":0.5}
+            text: "Go Back"
+            on_release:
+                app.root.current = "main"
+                root.manager.transition.direction = "right"
+
+
+
+<GetLinksButton>:
+    size_hint_x: 1
+    size_hint_y: 0.25
+    text: 'Show All Products'
+    on_press: root.get_links()
+
+<Bucket>:
+    size_hint_x: 1
+    size_hint_y: 0.25
+    text: 'Show My Bucket / Refresh'
+    on_press: root.get_links()
+
+<Rate>:
+    size_hint_x: 1
+    size_hint_y: 0.25
+    text: 'Give Rate to Products Bought'
+    on_press: root.get_links()
+
+<Payment>
+    name: "payment"
+    canvas.before:
+        Color:
+            rgba: root.rgba(204,102,0,1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    TabbedPanel:
+        do_default_tab: False
+        TabbedPanelItem:
+            text: "Credit Card"
+            BoxLayout:
+                orientation: "vertical"
+                padding: 35
+                GridLayout:
+                    cols: 2
+                    Label:
+                        text: "Full Name: "
+                    TextInput:
+                        id: user_name
+                        multiline: False
+
+                    Label:
+                        text: "Card Number: "
+                    TextInput:
+                        id: card_no
+                        multiline: False
+
+                    Label:
+                        text: "Cvc: "
+                    TextInput:
+                        id: cvc
+                        multiline: False
+                Label:
+                    size_hint_y: 0.4
+                    text:""
+                BoxLayout:
+                    orientation : "horizontal"
+                    size_hint_y: 0.4
+                    Button:
+                        text: "Confirm"
+                        on_release:
+                            root.confirm_payment("CREDITCARD", user_name.text, card_no.text, cvc.text)
+                            user_name.text = ""
+                            card_no.text = ""
+                            cvc.text = ""
+                    Button:
+                        text: "Cancel"
+                        on_release:
+                            app.root.current = "BuyerWindow"
+                            root.manager.transition.direction = "right"
+                            user_name.text = ""
+                            card_no.text = ""
+                            cvc.text = ""
+        TabbedPanelItem:
+            text: "EFT"
+            BoxLayout:
+                orientation: "vertical"
+                padding: 35
+                GridLayout:
+                    cols: 2
+                    Label:
+                        text: "Full Name: "
+                    TextInput:
+                        id: user_name2
+                        multiline: False
+
+                    Label:
+                        text: "EFT Number: "
+                    TextInput:
+                        id: card_no2
+                        multiline: False
+                Label:
+                    size_hint_y: 0.4
+                    text:""
+                BoxLayout:
+                    orientation : "horizontal"
+                    size_hint_y: 0.4
+                    Button:
+                        text: "Confirm"
+                        on_release:
+                            root.confirm_payment("EFT", user_name2.text, card_no2.text, 0)
+                            user_name2.text = ""
+                            card_no2.text = ""
+                    Button:
+                        text: "Cancel"
+                        on_release:
+                            app.root.current = "BuyerWindow"
+                            root.manager.transition.direction = "right"
+
+        TabbedPanelItem:
+            text: "PayPal"
+            BoxLayout:
+                orientation: "vertical"
+                padding: 35
+                GridLayout:
+                    cols: 2
+                    Label:
+                        text: "Full Name: "
+                    TextInput:
+                        id: user_name3
+                        multiline: False
+
+                    Label:
+                        text: "PayPal Number: "
+                    TextInput:
+                        id: card_no3
+                        multiline: False
+                Label:
+                    size_hint_y: 0.4
+                    text:""
+                BoxLayout:
+                    orientation : "horizontal"
+                    size_hint_y: 0.4
+                    Button:
+                        text: "Confirm"
+                        on_release:
+                            root.confirm_payment("PAYPAL", user_name3.text, card_no3.text, 0)
+                            user_name3.text = ""
+                            card_no3.text = ""
+                    Button:
+                        text: "Cancel"
+                        on_release:
+                            app.root.current = "BuyerWindow"
+                            root.manager.transition.direction = "right"
+
+<BuyerWindow>
+    canvas.before:
+        Color:
+            rgba: root.rgba(204,102,0,1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    name: "BuyerWindow"
+    TabbedPanel:
+        do_default_tab: False
+        TabbedPanelItem:
+            text: "All Products"
+            BoxLayout:
+                orientation: "vertical"
+                spacing: '10dp'
+                padding: 20
+                Label:
+                    size_hint_y: 0.5
+                    text: "To Add Products To Your Bucket Please Select Them"
+                GetLinksButton:
+                    button: buttons
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: 0.25
+                    Button:
+                        text: "ID"
+                        size_hint_x: 0.5
+                    Button:
+                        text: "Category"
+                    Button:
+                        text: "Brand"
+                    Button:
+                        text: "Name"
+                    Button:
+                        text: "Stock Amount"
+                    Button:
+                        text: "Price"
+                ScrollView:
+                    BoxLayout:
+                        orientation: "vertical"
+                        spacing: 7
+                        size_hint: 1,None
+                        height: self.minimum_height
+                        id: buttons
+        TabbedPanelItem:
+            text: "My Bucket"
+            BoxLayout:
+                orientation: "vertical"
+                spacing: '10dp'
+                padding: 20
+                Label:
+                    size_hint_y: 0.5
+                    text: "To Delete Products From Your Bucket Please Select Them"
+                Label:
+                    size_hint_y: 0.5
+                    text: ""
+                Bucket:
+                    button: bucket_button
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: 0.25
+                    Button:
+                        text: "ID"
+                        id: ID
+                        size_hint_x: 0.5
+                    Button:
+                        text: "Brand"
+                    Button:
+                        text: "Name"
+                    Button:
+                        text: "Seller"
+                    Button:
+                        text: "Amount"
+                    Button:
+                        text: "Price"
+                    Button:
+                        text: "Total Price"
+                ScrollView:
+                    BoxLayout:
+                        orientation: "vertical"
+                        spacing: 7
+                        size_hint: 1,None
+                        height: self.minimum_height
+                        id: bucket_button
+                Button:
+                    text: "Make Payment"
+                    size_hint: 0.4,0.3
+                    pos_hint: {"middle":1}
+                    on_release:
+                        root.make_payment()
+        TabbedPanelItem:
+            text: "My Profile"
+            BoxLayout:
+                orientation: "vertical"
+                padding: 40
+                spacing: 10
+                BoxLayout:
+                    orientation: "vertical"
+                    padding: 10
+                    Button:
+                        text: "Show My Profile"
+                        size_hint_y: 3
+                        on_release:
+                            lb1.text = root.show_profile_buyer(0)
+                            lb3.text = root.show_profile_buyer(2)
+                            lb4.text = root.show_profile_buyer(3)
+                            lb5.text = root.show_profile_buyer(4)
+                            lb6.text = root.show_profile_buyer(5)
+                            lb7.text = root.show_profile_buyer(6)
+                            lb8.text = root.show_profile_buyer(7)
+                    Label:
+                        id: lb1
+                        text: ""
+                    Label:
+                        id: lb3
+                        text: ""
+                    Label:
+                        id: lb4
+                        text: ""
+                    Label:
+                        id: lb5
+                        text: ""
+                    Label:
+                        id: lb6
+                        text: ""
+                    Label:
+                        id: lb7
+                        text: ""
+                    Label:
+                        id: lb8
+                        text: ""
+                Label:
+                    size_hint_y: 0.15
+                Rate:
+                    button: rate_button
+
+                ScrollView:
+                    BoxLayout:
+                        orientation: "vertical"
+                        spacing: 7
+                        size_hint: 1,None
+                        height: self.minimum_height
+                        id: rate_button
+    FloatLayout:
+        Button:
+            pos_hint: {"right":1,"top":1}
+            size_hint: 0.1,0.1
+            text: "Log Out"
+            on_release:
+                app.root.current = "main"
+                root.manager.transition.direction = "right"
+
+
+<SellerWindow>
+    canvas.before:
+        Color:
+            rgba: root.rgba(204,102,0,1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    name: "SellerWindow"
+    TabbedPanel:
+        do_default_tab: False
+        TabbedPanelItem:
+            text: 'My Products'
+            BoxLayout:
+                orientation: "vertical"
+                Button:
+                    text: "Show My Products / Refresh"
+                    size_hint: (0.25,0.25)
+                    on_release:
+                        my_products.text = root.seller_products()
+                        center_label.text = "My Products On Sale"
+                Label:
+                    id: center_label
+                    size_hint_y: 0.3
+                    text: ""
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint: (1,0.25)
+                    Button:
+                        text: "ID"
+                        size_hint_x: 0.5
+                    Button:
+                        text: "Category"
+                    Button:
+                        text: "Brand"
+                    Button:
+                        text: "Name"
+                    Button:
+                        text: "Stock Amount"
+                    Button:
+                        text: "Price"
+                ScrollView:
+                    size_hint: (1, 0.6)
+                    do_scroll_x: False
+                    do_scroll_y: True
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint: 1, None
+                        height: self.minimum_height
+                        canvas:
+                            Color:
+                                rgba: .35, .35, .35, 1
+                            Rectangle:
+                                size: self.size
+                                pos: self.pos
+                        Label:
+                            id: my_products
+                            font_size: 14.5
+                            size_hint_y: None
+                            height: self.texture_size[1]
+                            width: self.width
+                            text: ""
+                Label:
+                    text: "Updating/Deleting Or Adding New Products"
+                    size_hint_y: 0.4
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint: (1,0.25)
+                    Button:
+                        text: "ID"
+                        size_hint_x: 0.5
+                    Button:
+                        text: "Category"
+                    Button:
+                        text: "Brand"
+                    Button:
+                        text: "Name"
+                    Button:
+                        text: "New Stock Amount"
+                    Button:
+                        text: "New Price"
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint: (1,0.25)
+                    TextInput:
+                        id: ID
+                        size_hint_x: 0.5
+                        multiline: False
+                    TextInput:
+                        id: cat
+                        multiline: False
+                    TextInput:
+                        id: brand
+                        multiline: False
+                    TextInput:
+                        id: name
+                        multiline: False
+                    TextInput:
+                        id: stock
+                        multiline: False
+                    TextInput:
+                        id: price
+                        multiline: False
+                Label:
+                    text: "For Deleting Only ID is Enough\nFor Adding a Product, ID is Unnecessary"
+                    size_hint_y: 0.3
+                BoxLayout:
+                    orientation: "horizontal"
+                    Button:
+                        text: "Update Product"
+                        size_hint: (0.25,0.25)
+                        on_release:
+                            root.update_product(ID.text,cat.text,brand.text,name.text,stock.text,price.text)
+                    Button:
+                        text: "Delete Product"
+                        size_hint: (0.25,0.25)
+                        on_release:
+                            root.delete_product(ID.text)
+                    Button:
+                        text: "Add New Product"
+                        size_hint: (0.25,0.25)
+                        on_release:
+                            root.add_product(ID.text,cat.text,brand.text,name.text,stock.text,price.text)
+        TabbedPanelItem:
+            text: 'All Products'
+            BoxLayout:
+                orientation: "vertical"
+                Spinner:
+                    id: cat_spinner
+                    size_hint: 0.3, 0.15
+                    size: 100, 44
+                    text: 'Categories'
+                    values: 'ELEKTRONIK','BILGISAYAR/TABLET',"TELEFON/AKSESUAR","ANIME","BEYAZ ESYA","GIYIM","AYAKKABI/CANTA","KOL SAATI","TAKI/MUCEVHER","EV/YASAM/KIRTASIYE/OFIS" ,"MOBILYA","EV VE MUTFAK GERECLERI","OTO/BAHCE/YAPI MARKET","LASTIK/JANT","HIRDAVAT","SPOR/OUTDOOR","FITNESS/KONDISYON","FUTBOL","BAVUL/VALIZ/CANTA","KOZMETIK/KISISEL BAKIM","PARFUM","MAKYAJ","MAMALAR","DIGER",'Categories'
+                Label:
+                    text: 'All Products On Sale'
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint: (1,0.25)
+                    Button:
+                        text: "ID"
+                        size_hint_x: 0.5
+                        on_release:
+                            bottom_label.text = root.show_products(0)
+                    Button:
+                        text: "Category"
+                        on_release:
+                            bottom_label.text = root.show_products(1)
+                    Button:
+                        text: "Brand"
+                        on_release:
+                            bottom_label.text = root.show_products(2)
+                    Button:
+                        text: "Name"
+                        on_release:
+                            bottom_label.text = root.show_products(3)
+                    Button:
+                        text: "Seller's Nickname"
+                        on_release:
+                            bottom_label.text = root.show_products(4)
+                    Button:
+                        text: "Stock Amount"
+                        on_release:
+                            bottom_label.text = root.show_products(5)
+                    Button:
+                        text: "Price"
+                        on_release:
+                            bottom_label.text = root.show_products(6)
+                ScrollView:
+                    size_hint: (1, 0.6)
+                    do_scroll_x: False
+                    do_scroll_y: True
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint: 1, None
+                        height: self.minimum_height
+                        canvas:
+                            Color:
+                                rgba: .35, .35, .35, 1
+                            Rectangle:
+                                size: self.size
+                                pos: self.pos
+                        Label:
+                            id: bottom_label
+                            font_size: 11
+                            size_hint_y: None
+                            height: self.texture_size[1]
+                            width: self.width
+                            text: root.show_products(0)
+        TabbedPanelItem:
+            text: 'My Profile'
+            BoxLayout:
+                orientation: "vertical"
+                padding: 40
+                Button:
+                    text: "Show My Profile"
+                    on_release:
+                        lb1.text = root.show_profile(0)
+                        lb3.text = root.show_profile(2)
+                        lb4.text = root.show_profile(3)
+                        lb5.text = root.show_profile(4)
+                        lb6.text = root.show_profile(5)
+                        lb7.text = root.show_profile(6)
+                        lb8.text = root.show_profile(7)
+                Label:
+                    id: lb1
+                    text: ""
+                Label:
+                    id: lb3
+                    text: ""
+                Label:
+                    id: lb4
+                    text: ""
+                Label:
+                    id: lb5
+                    text: ""
+                Label:
+                    id: lb6
+                    text: ""
+                Label:
+                    id: lb7
+                    text: ""
+                Label:
+                    id: lb8
+                    text: ""
+
+    FloatLayout:
+        Button:
+            size_hint: 0.1,0.1
+            pos_hint: {"right":1, "top": 1}
+            text: 'Log Out'
+            on_release:
+                app.root.current = "main"
+                root.manager.transition.direction = "right"
+
+<GuestWindow>
+    canvas.before:
+        Color:
+            rgba: root.rgba(204,102,0,1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    name: "GuestWindow"
+    BoxLayout:
+        orientation: "vertical"
+        Button:
+            pos_hint: {'right':1}
+            background_normal: 'photos/back_icon.png'
+            background_down: 'photos/back_icon.png'
+            size_hint: None, None
+            size: 64,64
+            on_release:
+                app.root.current = "main"
+                root.manager.transition.direction = "right"
+        Spinner:
+            id: cat_spinner
+            size_hint: 0.3, 0.15
+            size: 100, 44
+            text: 'Categories'
+            values: 'ELEKTRONIK','BILGISAYAR/TABLET',"TELEFON/AKSESUAR","ANIME","BEYAZ ESYA","GIYIM","AYAKKABI/CANTA","KOL SAATI","TAKI/MUCEVHER","EV/YASAM/KIRTASIYE/OFIS" ,"MOBILYA","EV VE MUTFAK GERECLERI","OTO/BAHCE/YAPI MARKET","LASTIK/JANT","HIRDAVAT","SPOR/OUTDOOR","FITNESS/KONDISYON","FUTBOL","BAVUL/VALIZ/CANTA","KOZMETIK/KISISEL BAKIM","PARFUM","MAKYAJ","MAMALAR","DIGER",'Categories'
+        Label:
+            text: "Products"
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: (1,0.25)
+            Button:
+                text: "ID"
+                size_hint_x: 0.5
+                on_release:
+                    order.text = root.myFunc(0)
+            Button:
+                text: "Category"
+                on_release:
+                    order.text = root.myFunc(1)
+            Button:
+                text: "Brand"
+                on_release:
+                    order.text = root.myFunc(2)
+            Button:
+                text: "Name"
+                on_release:
+                    order.text = root.myFunc(3)
+            Button:
+                text: "Seller's Nickname"
+                on_release:
+                    order.text = root.myFunc(4)
+            Button:
+                text: "Stock Amount"
+                on_release:
+                    order.text = root.myFunc(5)
+            Button:
+                text: "Price"
+                on_release:
+                    order.text = root.myFunc(6)
+        ScrollView:
+            size_hint: (1, 0.6)
+            do_scroll_x: False
+            do_scroll_y: True
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint: 1, None
+                height: self.minimum_height
+                canvas:
+                    Color:
+                        rgba: .35, .35, .35, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                Label:
+                    id: order
+                    font_size: 11
+                    size_hint_y: None
+                    height: self.texture_size[1]
+                    width: self.width
+                    text: root.myFunc(0)
+
+
+<RegisterWindow>:
+    canvas.before:
+        Color:
+            rgba: root.rgba(204,102,0,1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    name: "registerWindow"
+    BoxLayout:
+        orientation: "vertical"
+        GridLayout:
+            cols: 2
+            Label:
+                text: "Name: "
+            TextInput:
+                id: user_name
+                multiline: False
+
+            Label:
+                text: "Last Name: "
+            TextInput:
+                id: user_last_name
+                multiline: False
+
+            Label:
+                text: "Email: "
+            TextInput:
+                id: user_email
+                multiline: False
+
+            Label:
+                text: "Nickname: "
+            TextInput:
+                id: user_nickname
+                multiline: False
+
+            Label:
+                text: "Password: "
+            TextInput:
+                id: user_password
+                multiline: False
+
+            Label:
+                text: "Address: "
+            TextInput:
+                id: user_address
+                multiline: False
+
+            Label:
+                text: "Phone Number(0XX): "
+            TextInput:
+                id: user_phone
+                multiline: False
+
+            Label:
+                text: "Birth Date(YYYY-MM-DD): "
+            TextInput:
+                id: user_birth_date
+                multiline: False
+
+            Label:
+                text: "Buyer/Seller: "
+            TextInput:
+                id: user_type
+                multiline: False
+
+        Button:
+            text: "Register"
+            size_hint: 1,0.5
+            on_release:
+                if root.btn(root.user_add(user_email.text,user_password.text,user_nickname.text,user_name.text,user_last_name.text,user_address.text,user_phone.text,user_birth_date.text,user_type.text)): \
+                app.root.current = "main"
+                root.manager.transition.direction = "left"
+        Button:
+            text: "Go Back"
+            size_hint: 1,0.5
+            on_release:
+                app.root.current = "main"
+                root.manager.transition.direction = "right"
+

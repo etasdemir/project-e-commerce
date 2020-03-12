@@ -1,0 +1,729 @@
+	CREATE TABLE IF NOT EXISTS registration(
+		e_mail varchar(100),
+		password varchar(100),
+		primary key(e_mail) 
+	);
+	CREATE TABLE IF NOT EXISTS person(
+		reg_e_mail varchar(100),
+		nickname varchar(100),
+		name varchar(50),
+		lastname varchar(50),
+		address varchar(255),
+		phone varchar(20),
+		DoB date,
+		primary key(nickname),
+		foreign key(reg_e_mail) references registration(e_mail) ON DELETE CASCADE ON UPDATE CASCADE
+	);
+	CREATE TABLE IF NOT EXISTS seller(
+		nickname varchar(100),
+		rate int DEFAULT 0,
+		primary key(nickname),
+		foreign key(nickname) references person(nickname) ON DELETE CASCADE ON UPDATE CASCADE
+	);
+	CREATE TABLE IF NOT EXISTS buyer(
+		nickname varchar(100),
+		ranking int DEFAULT 0,
+		primary key(nickname),
+		foreign key(nickname) references person(nickname) ON DELETE CASCADE ON UPDATE CASCADE
+	);
+	CREATE TABLE IF NOT EXISTS category(
+		id int(11),
+		parent_id int(11),
+		name varchar(255),
+		primary key(id)
+	);
+	CREATE TABLE IF NOT EXISTS product(
+		id int(11),
+		category_id int(11),
+		brand varchar(100),
+		name varchar(255),
+		primary key(id),
+		foreign key(category_id) references category(id) ON DELETE CASCADE ON UPDATE CASCADE
+	);
+	CREATE TABLE IF NOT EXISTS stock_product(
+		seller_nickname varchar(100) ,
+		product_id int(11) ,
+		stock int(11) DEFAULT NULL,
+		price float,
+		primary key(seller_nickname,product_id),
+		foreign key(seller_nickname) references seller(nickname) ON DELETE CASCADE ON UPDATE CASCADE ,
+		foreign key(product_id) references product(id) ON DELETE CASCADE ON UPDATE CASCADE
+	);	
+	CREATE TABLE IF NOT EXISTS bucket(
+		buyer_nickname varchar(100) ,
+		adding_date date,
+		product_id int(11),
+		seller_nickname varchar(100),
+		amount int(11),
+		primary key(buyer_nickname,adding_date,product_id),
+		foreign key(buyer_nickname) references buyer(nickname) ON DELETE CASCADE ON UPDATE CASCADE,
+		foreign key(seller_nickname,product_id) references stock_product(seller_nickname,product_id) ON DELETE CASCADE ON UPDATE CASCADE
+	);
+	CREATE TABLE IF NOT EXISTS product_rate(
+		rate_id int(11),
+		product_id int(11),
+		seller_nickname varchar(100),
+		buyer_nickname varchar(100),
+		rate_date date,
+		comment varchar(255),
+		rate int(3),
+		primary key(rate_id),
+		foreign key(product_id,seller_nickname) references stock_product(product_id,seller_nickname) ON DELETE CASCADE ON UPDATE CASCADE,
+		foreign key(buyer_nickname) references buyer(nickname) ON DELETE CASCADE ON UPDATE CASCADE
+	);
+	CREATE TABLE IF NOT EXISTS payment(
+		payers_name varchar(100),
+		buyer_nickname varchar(100),
+		payment_date date,
+		payment_time TIME,
+		payment_type varchar(100),
+		totalPrice int,
+		primary key(buyer_nickname, payment_date, payment_time),
+		foreign key(buyer_nickname) references buyer(nickname) ON DELETE CASCADE ON UPDATE CASCADE
+	);
+	CREATE TABLE IF NOT EXISTS creditCard(
+		buyer_nickname varchar(100),
+		payment_date date,
+		payment_time TIME,
+		card_number int,
+		cvc int ,
+		primary key(buyer_nickname, payment_date, payment_time),
+		foreign key(buyer_nickname) references payment(buyer_nickname) ON DELETE CASCADE ON UPDATE CASCADE
+	);
+	CREATE TABLE IF NOT EXISTS eft(
+		buyer_nickname varchar(100),
+		payment_date date,
+		payment_time TIME,
+		eft_number int,
+		
+		primary key(buyer_nickname, payment_date, payment_time),
+		foreign key(buyer_nickname) references payment(buyer_nickname) ON DELETE CASCADE ON UPDATE CASCADE
+	);
+	CREATE TABLE IF NOT EXISTS paypal(
+		buyer_nickname varchar(100),
+		payment_date date,
+		payment_time TIME,
+		paypal_no int,
+		
+		primary key(buyer_nickname, payment_date, payment_time),
+		foreign key(buyer_nickname) references payment(buyer_nickname) ON DELETE CASCADE ON UPDATE CASCADE
+	);	
+	CREATE TABLE IF NOT EXISTS backup_bucket(
+		buyer_nickname varchar(100) ,
+		adding_date date,
+		product_id int(11),
+		seller_nickname varchar(100),
+		amount int(11),
+		primary key(buyer_nickname,adding_date,product_id),
+		foreign key(buyer_nickname) references buyer(nickname) ON DELETE CASCADE ON UPDATE CASCADE,
+		foreign key(seller_nickname,product_id) references stock_product(seller_nickname,product_id) ON DELETE CASCADE ON UPDATE CASCADE
+	);
+
+DROP PROCEDURE IF EXISTS insert_person;
+DROP PROCEDURE IF EXISTS create_categories;
+DROP PROCEDURE IF EXISTS update_the_stock_and_price;
+DROP PROCEDURE IF EXISTS add_to_bucket;
+DROP PROCEDURE IF EXISTS make_payment;
+DROP PROCEDURE IF EXISTS add_rate_to_product;
+DROP FUNCTION IF EXISTS is_there_registration;
+DROP FUNCTION IF EXISTS is_there_person;
+DROP FUNCTION IF EXISTS is_there_category;
+DROP FUNCTION IF EXISTS is_there_stock_product;
+DROP FUNCTION IF EXISTS get_product_id;
+DROP FUNCTION IF EXISTS get_category_id;
+DROP FUNCTION IF EXISTS get_count_product;
+DROP FUNCTION IF EXISTS isseller;
+DROP FUNCTION IF EXISTS is_there_stock;
+DROP FUNCTION IF EXISTS is_in_bucket;
+DROP FUNCTION IF EXISTS previous_amount;
+DROP FUNCTION IF EXISTS is_there_buyer;
+DROP FUNCTION IF EXISTS is_buyer_has_bucket;
+DROP FUNCTION IF EXISTS totalPrice_find;
+DROP FUNCTION IF EXISTS is_there_payment;
+DROP TRIGGER IF EXISTS update_buyer_rate;
+DROP TRIGGER IF EXISTS update_seller_rate;
+DROP TRIGGER IF EXISTS reduce_stock;
+DROP TRIGGER IF EXISTS delete_bucket;
+DROP TRIGGER IF EXISTS Product_id_inc;
+DROP TRIGGER IF EXISTS Product_rate_id;
+
+
+delimiter //
+CREATE PROCEDURE insert_person( 
+    IN e_mail varchar(100),
+    IN password varchar(100),
+    IN nickname varchar(100),
+    IN name varchar(50),
+    IN lastname varchar(50),
+    IN address varchar(255),
+    IN phone varchar(20),
+    IN DoB date,
+    IN kind varchar(20)
+) 
+begin
+	IF is_there_person(nickname) = false then
+		IF is_there_registration(e_mail) = false then
+			insert into registration values(e_mail,password);
+		END IF;
+		insert into person values(e_mail,nickname,name,lastname,address,phone,DoB);
+		IF  lower(kind) = 'seller' THEN
+			insert into seller values(nickname,0);
+		ELSE
+			insert into buyer values(nickname,0);
+		END IF;
+	END IF;
+end; //
+
+/* -------------------------------------  */
+delimiter //
+CREATE PROCEDURE create_categories(
+	IN category_id int(11),
+	IN parent_id int(11),
+	IN name varchar(255)
+)
+begin
+	IF is_there_category(category_id) = false THEN
+		insert into category values(category_id,parent_id,LOWER(name));
+	END IF;
+end; //
+
+
+
+
+
+
+/* ------------------------------------- */
+
+delimiter //
+
+CREATE PROCEDURE update_the_stock_and_price(
+             IN product_brand varchar(100),
+             IN product_name varchar(100),
+             IN category_name varchar(100),
+             IN seller_nickname varchar(100),
+             IN stock int(11),
+             IN price float,
+	     IN id int(11)
+)
+begin
+             
+             DECLARE product_id int(11);
+	     DECLARE flag boolean;
+             DECLARE category_id int(11);
+             DECLARE isseller varchar(100);
+             SET category_id = get_category_id(LOWER(category_name));
+             SET product_id = get_product_id(LOWER(product_brand),LOWER(product_name));
+             SET isseller = isseller(lower(seller_nickname));
+             IF isseller = true THEN
+                           IF product_id is null THEN
+                                        insert into product values(id,category_id,LOWER(product_brand),LOWER(product_name));
+                                        SET product_id = get_product_id(LOWER(product_brand),LOWER(product_name));
+                                        insert into stock_product values(seller_nickname,product_id,stock,price);
+                           ELSE
+                                        SET flag = is_there_stock_product(seller_nickname,product_id);
+             IF flag = true THEN
+                                                     UPDATE stock_product
+                          SET stock_product.stock = stock , stock_product.price = price
+                          WHERE stock_product.seller_nickname = seller_nickname AND stock_product.product_id = product_id;
+                                        ELSE
+                                                     insert into stock_product values(seller_nickname,product_id,stock,price);
+                                        END IF ;
+                           END IF;
+             END IF;
+
+            
+
+end; //
+
+/* ------------------------------------- */
+delimiter //
+CREATE PROCEDURE add_to_bucket( 
+   	buyer_nickname varchar(100),
+	product_id int(11),
+	seller_nickname varchar(100),
+	amount int(11)
+) 
+begin
+	DECLARE stock int(11);
+	DECLARE previous_amount_var int(11);
+	DECLARE adding_date DATE;
+	DECLARE current_amount int(11);
+    SET adding_date = CURDATE();
+	SET stock = is_there_stock(seller_nickname,product_id);
+	IF stock >= amount then
+		IF is_in_bucket(buyer_nickname,adding_date,product_id) = true then 
+			SET previous_amount_var = previous_amount(buyer_nickname,adding_date,product_id);
+            SET current_amount = previous_amount_var + amount;
+			UPDATE bucket
+			SET bucket.amount = current_amount 
+			WHERE bucket.buyer_nickname = buyer_nickname AND bucket.adding_date = adding_date AND bucket.product_id = product_id;
+		ELSE
+			IF is_there_buyer(buyer_nickname) = true then
+				insert into bucket values(buyer_nickname,adding_date,product_id,seller_nickname,amount);
+			END IF;
+		END IF;	
+	END IF;
+end; //
+/* ------------------------------------- */
+delimiter //
+CREATE PROCEDURE make_payment( 
+   	buyer_nickname varchar(100),
+	payment_date date,
+	payment_type varchar(100),
+	payers_name varchar(100),
+	number int,
+	cvc int
+) 
+begin
+	DECLARE totalPrice int;
+    	DECLARE payment_time TIME;
+	SET totalPrice = totalPrice_find(buyer_nickname, payment_date);
+	SET payment_time = CURRENT_TIME;
+	IF is_buyer_has_bucket(buyer_nickname, payment_date) = true then
+		insert into payment values(payers_name,buyer_nickname,payment_date,payment_time,payment_type,totalPrice);
+	
+		IF payment_type = 'CREDITCARD' then
+			insert into creditCard values(buyer_nickname,payment_date,payment_time,number,cvc);
+		ELSEIF payment_type = 'PAYPAL' then
+			insert into paypal values(buyer_nickname,payment_date,payment_time,number);
+		ELSE
+			insert into eft values(buyer_nickname,payment_date,payment_time,number);
+		END IF;
+		
+	END IF;
+end; //
+/* ------------------------------------- */
+delimiter //
+CREATE PROCEDURE add_rate_to_product(
+IN product_id int,
+IN sel_Name varchar(100),
+IN buy_Name varchar(100),
+IN comment varchar(255),
+IN rate int,
+IN rate_id int(11)
+)
+BEGIN
+	DECLARE rate_date date;
+	SET rate_date = CURDATE();
+	IF is_there_payment(buy_Name,rate_date) = true THEN
+		IF is_there_stock_product(sel_Name,product_id) = true THEN 
+			INSERT INTO product_rate VALUES (rate_id,product_id,sel_Name,buy_Name,rate_date,comment,rate);
+		END IF;
+	END IF;
+end; //
+
+
+/* ------------------------------------- */
+
+delimiter $$
+CREATE FUNCTION is_there_registration(e_mail varchar(100)) RETURNS boolean
+DETERMINISTIC
+BEGIN
+	DECLARE flag int(11);
+    
+    SET flag = ( SELECT COUNT(*) 
+    FROM registration
+    WHERE registration.e_mail = e_mail ) ;
+    
+	IF flag = 0 THEN
+		RETURN (false);
+	ELSE 
+		RETURN (true);
+	END IF;
+END$$
+DELIMITER ;
+/*    ------------------------    */
+delimiter $$
+CREATE FUNCTION is_there_person(nickname varchar(100)) RETURNS boolean
+DETERMINISTIC
+BEGIN
+	DECLARE flag int(11);
+    
+    SET flag = ( SELECT COUNT(*)
+    FROM person
+    WHERE person.nickname = nickname  );
+    
+	IF flag = 0 THEN
+		RETURN (false);
+	ELSE	
+		RETURN (true);
+	END IF;
+END$$
+DELIMITER ;
+/*    ------------------------    */
+delimiter $$
+CREATE FUNCTION is_there_category(category_id int(11)) RETURNS boolean
+DETERMINISTIC
+BEGIN
+	DECLARE flag int(11);
+    
+    SET flag = ( SELECT COUNT(*) 
+    FROM category
+    WHERE category.id = category_id ) ;
+    
+	IF  flag = 0 THEN
+		RETURN (false);
+	ELSE	
+		RETURN (true);
+	END IF;
+END$$
+DELIMITER ;
+/*    ------------------------    */
+delimiter $$
+CREATE FUNCTION is_there_stock_product(seller_nickname varchar(100),product_id int(11)) RETURNS boolean
+DETERMINISTIC
+BEGIN
+	DECLARE flag int(11);
+    
+    SET flag = ( SELECT COUNT(*) 
+    FROM stock_product
+    WHERE stock_product.seller_nickname = seller_nickname AND stock_product.product_id = product_id ) ;
+    
+	IF  flag = 0 THEN
+		RETURN (false);
+	ELSE	
+		RETURN (true);
+	END IF;
+END$$
+DELIMITER ;
+/*    ------------------------    */
+delimiter $$
+CREATE FUNCTION get_product_id(brand varchar(100),name varchar(255)) RETURNS INT(11)
+BEGIN
+	DECLARE product_id_var int(11);
+	SET product_id_var = NULL;
+    
+    SET product_id_var = (SELECT product.id
+    		      FROM product
+    		      WHERE product.name = name AND product.brand = brand );
+    
+	RETURN product_id_var;
+END$$
+DELIMITER ;
+/*    ------------------------    */
+delimiter $$
+CREATE FUNCTION get_category_id(category_name varchar(100)) RETURNS INT(11)
+BEGIN
+	DECLARE cat_id int(11);
+	SET cat_id = NULL;
+    
+    SET cat_id =  (SELECT category.id
+    		FROM category
+    		WHERE category.name = category_name);
+    
+	RETURN cat_id;
+END$$
+DELIMITER ;
+/* --------------------------- */
+delimiter $$
+CREATE FUNCTION get_count_product() RETURNS INT(11)
+BEGIN
+	DECLARE count int(11);
+    SET count = (SELECT count(product.id)
+    		FROM product);
+	RETURN count;
+END$$
+DELIMITER ;
+
+
+/* --------------------------- */
+delimiter $$
+CREATE FUNCTION isseller(seller_nickname varchar(100)) RETURNS boolean
+BEGIN
+	DECLARE flag int(11);
+    	SET flag = (SELECT COUNT(*)
+    		     	FROM seller
+			WHERE seller.nickname = seller_nickname);
+
+	IF flag = 0 THEN
+		RETURN (false);
+	ELSE	
+		RETURN (true);
+	END IF;
+END$$
+DELIMITER ;
+/* --------------------------- */
+delimiter $$
+CREATE FUNCTION is_there_stock(seller_nickname varchar(100),productid varchar(100)) RETURNS INT(11)
+BEGIN
+	DECLARE stock int(11);
+    	SET stock = (SELECT stock_product.stock
+    		     FROM stock_product
+		     WHERE stock_product.seller_nickname = seller_nickname AND stock_product.product_id = productid);
+	RETURN stock;
+END$$
+DELIMITER ;
+/*    ------------------------    */
+delimiter $$
+CREATE FUNCTION is_in_bucket(buyer_nickname varchar(100),adding_date date,product_id int(11)) RETURNS boolean
+DETERMINISTIC
+BEGIN
+	DECLARE flag int(11);
+    
+    SET flag = (SELECT COUNT(*)
+    		FROM bucket
+    		WHERE bucket.buyer_nickname = buyer_nickname AND bucket.adding_date = adding_date AND bucket.product_id = product_id);
+    
+	IF flag = 0 THEN
+		RETURN (false);
+	ELSE	
+		RETURN (true);
+	END IF;
+END$$
+DELIMITER ;
+/* --------------------------- */
+delimiter $$
+CREATE FUNCTION previous_amount(buyer_nickname varchar(100),adding_date date,product_id int(11)) RETURNS INT(11)
+BEGIN
+	DECLARE amount int(11);
+    	SET amount = (SELECT bucket.amount 
+	FROM bucket 
+	WHERE bucket.buyer_nickname = buyer_nickname AND bucket.adding_date = adding_date AND bucket.product_id = product_id);
+	
+	RETURN amount;
+END$$
+DELIMITER ;
+/* --------------------------- */
+delimiter $$
+CREATE FUNCTION is_there_buyer(buyer_nickname varchar(100)) RETURNS boolean
+BEGIN
+	DECLARE flag int(11);
+    	SET flag = (SELECT COUNT(*)
+    		     	FROM buyer
+			WHERE buyer.nickname = buyer_nickname);
+
+	
+	IF flag = 0 THEN
+		RETURN (false);
+	ELSE	
+		RETURN (true);
+	END IF;
+END$$
+DELIMITER ;
+/* --------------------------- */
+delimiter $$
+CREATE FUNCTION is_buyer_has_bucket(buyer_nickname varchar(100),bucket_date date) RETURNS boolean
+BEGIN
+	DECLARE flag int(11);
+    	SET flag = (SELECT COUNT(*)
+    		     	FROM bucket
+			WHERE bucket.buyer_nickname = buyer_nickname AND bucket.adding_date = bucket_date);
+
+	
+	IF flag = 0 THEN
+		RETURN (false);
+	ELSE	
+		RETURN (true);
+	END IF;
+END$$
+DELIMITER ;
+/* --------------------------- */
+delimiter $$
+CREATE FUNCTION totalPrice_find(buyer_nickname varchar(100),bucket_date date) RETURNS int
+BEGIN
+	DECLARE price int;
+    	SET price = (SELECT SUM(bucket.amount*stock_product.price)
+    		     FROM bucket,stock_product
+		     WHERE bucket.buyer_nickname = buyer_nickname AND bucket.adding_date = bucket_date AND bucket.product_id = stock_product.product_id);
+	return price;
+END$$
+DELIMITER ;
+/* --------------------------- */
+delimiter $$
+CREATE FUNCTION is_there_payment(buyer_nickname_var varchar(100), r_date date) RETURNS boolean
+BEGIN
+	DECLARE flag int;
+    SET flag = (SELECT COUNT(*)
+    		FROM payment
+		WHERE payment.buyer_nickname = buyer_nickname_var AND payment.payment_date = r_date);
+
+	
+	IF flag = 0 THEN
+		RETURN (false);
+	ELSE	
+		RETURN (true);
+	END IF;
+END$$
+DELIMITER ;
+
+
+/* --------------------------- */
+
+CREATE TRIGGER update_buyer_rate AFTER INSERT ON payment FOR EACH ROW
+    UPDATE buyer
+    SET buyer.ranking = buyer.ranking + (SELECT totalPrice / 100 FROM payment WHERE payment.buyer_nickname = NEW.buyer_nickname AND payment.payment_date = NEW.payment_date AND  payment.payment_time = NEW.payment_time)
+    WHERE nickname = NEW.buyer_nickname
+;	
+CREATE TRIGGER update_seller_rate AFTER INSERT ON product_rate FOR EACH ROW
+    UPDATE seller 
+    SET seller.rate=(SELECT AVG(rate) from product_rate where NEW.seller_nickname = product_rate.seller_nickname )
+    WHERE nickname = NEW.seller_nickname
+;	
+CREATE TRIGGER reduce_stock AFTER INSERT ON payment FOR EACH ROW 
+    UPDATE stock_product 
+    JOIN bucket ON bucket.product_id = stock_product.product_id
+    SET stock_product.stock = stock_product.stock - bucket.amount
+    WHERE (bucket.buyer_nickname = NEW.buyer_nickname AND bucket.adding_date = NEW.payment_date);
+;
+
+CREATE TRIGGER backup_bucket_adder AFTER INSERT ON payment FOR EACH ROW
+	insert into backup_bucket(buyer_nickname,adding_date,product_id,seller_nickname,amount)
+    	SELECT buyer_nickname,adding_date,product_id,seller_nickname,amount
+    	FROM bucket
+	WHERE bucket.buyer_nickname = NEW.buyer_nickname AND bucket.adding_date = NEW.payment_date
+;
+CREATE TRIGGER delete_bucket AFTER INSERT ON payment FOR EACH ROW
+	DELETE FROM bucket WHERE bucket.buyer_nickname = NEW.buyer_nickname AND bucket.adding_date = NEW.payment_date
+;
+
+CREATE TRIGGER Product_id_inc BEFORE INSERT ON product FOR EACH ROW
+	SET NEW.id = (SELECT COALESCE(max(id)+1,1) from product)
+;
+CREATE TRIGGER Product_rate_id BEFORE INSERT ON product_rate FOR EACH ROW
+	SET NEW.rate_id = (SELECT COALESCE(max(rate_id)+1,1) FROM product_rate)
+;
+
+
+
+
+CALL insert_person('ankaralı@hotmail.com','123','angara','Furkan','Kaya','Yenimahalle/Ankara','03559768689','1986-07-28','buyer');
+CALL insert_person('alikaya@hotmail.com','134679','akaya','Ali','Kaya','Etimesgut/Ankara','03559768689','1996-01-28','buyer');
+CALL insert_person('spaceboy@outlook.com','145872ad','universe','Ozgür','Yılmaz','Etiler/Istanbul','03559761389','1999-07-28','buyer');
+CALL insert_person('josephstali@gmail.com','b1p2b3p4','jozef','Joseph','Stali','Cayyolu/Ankara','03145768689','1976-06-18','buyer');
+CALL insert_person('overlord@gmail.com','aqx156s12','ainssama','Ains Oal','Gown','Merkez/Ankara','05235768689','2000-07-28','buyer');
+CALL insert_person('mirainikki@gmail.com','12jj3a2d','mirainikki','Gasai','Yuno','Sincan/Ankara','01456328081','1998-01-30','seller');
+CALL insert_person('tempest@gmail.com','12asc3gf','rimuru','Rimuru','Tempest','Merkez/Ankara','05459321321','1998-04-20','seller');
+CALL insert_person('vinland@gmail.com','235g346h','thorff','Thorffin','Olaf','Eryaman/Ankara','05448628081','1997-01-30','seller');
+CALL insert_person('emrekoyun@gmail.com','123fcas54','emre','Emre','Koyun','Yenimahalle/Ankara','05459312341','1995-01-30','seller');
+CALL insert_person('yukki@gmail.com','1468fsd64','darling02','Yukki','Kirito','Merkez/Ankara','05454228081','1999-06-11','seller');
+CALL insert_person('tanya@gmail.com','12jd3ck45','elacqua','Tanya Von','Degurechaff','Merkez/Ankara','05354235081','1998-09-01','seller');
+CALL insert_person('gymaster@hacettepe.edu.com','S1v4sl1m','KebapBorn','Ali','Kayadibi','Mamak/Ankara','05468631174','1998-01-31','buyer');
+CALL insert_person('ehancı@hacettepe.edu.com','j3ks2jcm3k','grandblue','Emre','Hancı','Cayyolu/Ankara','05367314368','1995-04-11','buyer');
+CALL insert_person('imthemachine@hacettepe.edu.com','dj2ıj3f','GameMaster','Harun Alperen','Oktaş','Beytepe/Ankara','05712571435','1999-05-24','buyer');
+CALL insert_person('ismail012@hacettepe.edu.com','dklsk345ckd','isot','Ismail','Ates','Beytepe/Ankara','05473361235','1997-12-28','buyer');
+CALL insert_person('mamakmert@hacettepe.edu.com','k3jdkc32','motherrussia','Mert','Çökelek','Mamak/Ankara','05367144356','1999-08-17','buyer');
+CALL insert_person('japone@hacettepe.edu.com','ac3fs2a','Nippon','Eren','Tasdemir','Etimesgut/Ankara','05467138897','1998-09-22','seller');
+CALL insert_person('pr0h3ck1r@hacettepe.edu.com','L1nuxC4nd1r','Extreme67','Sencer','Sakallı','Kızılay/Ankara','05673403012','1998-02-28','seller');
+CALL insert_person('1m41@hacettepe.edu.com','0x3B56F78A','Can1s1','Sercan','Amac','Kızılay/Ankara','05556661122','1998-03-15','seller');
+CALL insert_person('oguzhan.eroglu@hacettepe.edu.com','oguz','KillaOguzhan','Oguzhan','Eroglu','Beytepe/Ankara','05671201011','1998-01-30','seller');
+
+
+/*  --------------------------------------  */ 
+
+CALL create_categories(1,NULL,'ELEKTRONİK');
+CALL create_categories(2,1,'BILGISAYAR/TABLET');
+CALL create_categories(3,1,'TELEFON/AKSESUAR');
+CALL create_categories(4,1,'ANIME');
+CALL create_categories(5,1,'BEYAZ ESYA');
+CALL create_categories(6,NULL,'GIYIM');
+CALL create_categories(7,2,'AYAKKABI/CANTA');
+CALL create_categories(8,2,'KOL SAATI');
+CALL create_categories(9,2,'TAKI/MUCEVHER');
+CALL create_categories(10,NULL,'EV/YASAM/KIRTASIYE/OFIS');
+CALL create_categories(11,3,'MOBILYA');
+CALL create_categories(12,3,'EV ve MUTFAK GERECLERI');
+CALL create_categories(13,NULL,'OTO/BAHCE/YAPI MARKET');
+CALL create_categories(14,4,'LASTIK/JANT');
+CALL create_categories(15,4,'HIRDAVAT');
+CALL create_categories(16,NULL,'SPOR/OUTDOOR');
+CALL create_categories(17,5,'FITNESS/KONDISYON');
+CALL create_categories(18,5,'FUTBOL');
+CALL create_categories(19,5,'BAVUL/VALIZ/CANTA');
+CALL create_categories(20,NULL,'KOZMETIK/KISISEL BAKIM');
+CALL create_categories(21,6,'PARFUM');
+CALL create_categories(22,6,'MAKYAJ');
+CALL create_categories(23,6,'MAMALAR');
+CALL create_categories(24,NULL,'DIGER');
+
+
+
+CALL update_the_stock_and_price('Huawei','Huawei P30','TELEFON/AKSESUAR','emre',50,1059.99,1);
+CALL update_the_stock_and_price('Huawei','Huawei P30','TELEFON/AKSESUAR','emre',150,1159.99,1);
+CALL update_the_stock_and_price('Xiaomi','Xiaomi Red Mi Note 7','TELEFON/AKSESUAR','Can1s1',135,1650,1);
+CALL update_the_stock_and_price('SlimeDattaKen','Slime Pillow','ANIME','rimuru',250,75,1);
+CALL update_the_stock_and_price('Xiaomi','Xiaomi Red Mi Note 7','TELEFON/AKSESUAR','Can1s1',135,1550,1);
+CALL update_the_stock_and_price('Samsung','Samsung Galaxy Note 3','TELEFON/AKSESUAR','KillaOguzhan',555,650,1);
+CALL update_the_stock_and_price('Colins','Mens Sweatshirt','GIYIM','thorff',170,50,1);
+CALL update_the_stock_and_price('US POLO','Red Tshirt','GIYIM','mirainikki',215,70,1);
+CALL update_the_stock_and_price('TORU','5 katlı futbol topu','FUTBOL','thorff',135,5,1);
+CALL update_the_stock_and_price('Bebelac','Bebelac Gold 3 Devam Sutu','MAMALAR','mirainikki',500,25,1);
+CALL update_the_stock_and_price('Chanel','Chanel No.5','PARFUM','Nippon',150,250,1);
+CALL update_the_stock_and_price('Maybelline','Maybelline Ink Likit Mat Ruj','MAKYAJ','Nippon',150,310,1);
+CALL update_the_stock_and_price('Nivea','Nivea For Men Sampuan','KOZMETIK/KISISEL BAKIM','elacqua',210,10,1);
+CALL update_the_stock_and_price('Rolex','Rolex Oyster Perpetual','KOL SAATI','mirainikki',50,350,1);
+CALL update_the_stock_and_price('DarlingInTheFranxx','DarlingInTheFranxx 02 Premium Figure','ANIME','darling02',200,90,1);
+CALL update_the_stock_and_price('DarlingInTheFranxx','DarlingInTheFranxx 02 Hugging Pillow','ANIME','darling02',200,90,1);
+CALL update_the_stock_and_price('Petlas','Petlas Kar Lastigi','LASTIK/JANT','KillaOguzhan',132,250,1);
+CALL update_the_stock_and_price('Rolex','Rolex Oyster Perpetual','KOL SAATI','mirainikki',165,310,1);
+CALL update_the_stock_and_price('Bosch','Bosch Matkap','HIRDAVAT','elacqua',55,250,1);
+
+
+
+call add_to_bucket('ainssama',1,'emre',15);
+call add_to_bucket('ainssama',1,'emre',25);
+call add_to_bucket('akaya',2,'Can1s1',55);
+call add_to_bucket('universe',4,'KillaOguzhan',65);
+call add_to_bucket('ainssama',3,'rimuru',100);
+call add_to_bucket('angara',7,'thorff',15);
+call add_to_bucket('jozef',16,'elacqua',15);
+call add_to_bucket('KebapBorn',10,'Nippon',25);
+call add_to_bucket('KebapBorn',10,'Nippon',25);
+call add_to_bucket('KebapBorn',10,'Nippon',25);
+call add_to_bucket('KebapBorn',10,'Nippon',25);
+call add_to_bucket('grandblue',15,'KillaOguzhan',4);
+call add_to_bucket('GameMaster',8,'mirainikki',4);
+call add_to_bucket('GameMaster',15,'KillaOguzhan',4);
+call add_to_bucket('motherrussia',3,'rimuru',15);
+call add_to_bucket('motherrussia',14,'darling02',20);
+call add_to_bucket('motherrussia',13,'darling02',20);
+
+
+call make_payment('ainssama',CURDATE(),'EFT','Eren',31273182,NULL);
+call make_payment('universe',CURDATE(),'EFT','Eren',31273182,NULL);
+call make_payment('akaya',CURDATE(),'CREDITCARD','Eren',31273182,123);
+
+
+call add_rate_to_product(1,'emre','ainssama','Great',5,1);
+call add_rate_to_product(1,'emre','ainssama','Not bad',3,1);
+
+
+drop VIEW if EXISTS Buyers;
+CREATE VIEW Buyers AS
+SELECT person.reg_e_mail,person.nickname,person.name,person.lastname,person.address,person.phone,person.DoB,buyer.ranking
+FROM person, buyer
+WHERE person.nickname=buyer.nickname;
+
+drop VIEW if EXISTS Sellers;
+CREATE VIEW Sellers AS
+SELECT person.reg_e_mail,person.nickname,person.name,person.lastname,person.address,person.phone,person.DoB,seller.rate
+FROM person, seller
+WHERE person.nickname=seller.nickname;
+
+drop VIEW if EXISTS Advanced_Rate;
+CREATE VIEW Advanced_Rate AS SELECT product_rate.seller_nickname as 'Seller Nickname', product_rate.product_id AS 'Product ID', product.brand AS 'Brand' , product.name AS 'Name' , category.name AS 'Category' , stock_product.stock AS 'StockAmount' , stock_product.price AS 'Price', AVG(product_rate.rate) AS 'ProductRate' 
+FROM product,stock_product,product_rate,category
+WHERE product.id=stock_product.product_id and product_rate.product_id=product.id and category.id=product.category_id and stock_product.seller_nickname = product_rate.seller_nickname
+GROUP BY  product_rate.seller_nickname, product_rate.product_id , product.brand, product.name, category.name, stock_product.stock, stock_product.price;
+
+drop VIEW if EXISTS Number_of_products_per_category;
+CREATE VIEW Number_of_products_per_category AS
+ SELECT category.name AS 'Category', COUNT(*) AS '#OfProducts' 
+ FROM product,category 
+ WHERE product.category_id=category.id 
+ GROUP BY product.category_id;
+
+drop VIEW if EXISTS Extend_Bucket;
+CREATE VIEW Extend_Bucket AS
+SELECT bucket.buyer_nickname AS Buyer,
+bucket.adding_date AS Date,
+stock_product.seller_nickname AS Seller,
+CONCAT(product.brand , product.name) AS ProductName,
+category.name AS Category,
+bucket.amount AS TakenAmount,
+stock_product.price AS Price,
+(bucket.amount*stock_product.price) AS TotalPrice
+FROM bucket,stock_product,product,category 
+WHERE bucket.seller_nickname = stock_product.seller_nickname AND
+bucket.product_id = stock_product.product_id AND 
+product.id = stock_product.product_id AND
+product.category_id = category.id;
